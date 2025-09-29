@@ -1,0 +1,32 @@
+name: Auto Upload Data
+
+on:
+  schedule:
+    - cron: "0 16 * * *"   # 12h Québec (16h UTC)
+  workflow_dispatch: {}     # bouton "Run workflow"
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clean old files
+        run: |
+          mkdir -p data
+          rm -f data/*.json || true
+          rm -f data/*.csv || true
+
+      - name: Download JSONs from Google Drive (public folder)
+        run: |
+          pip install gdown
+          mkdir -p data
+          gdown --folder "https://drive.google.com/drive/folders/1no1S6Zqea1dpRX3f78PHGvouswmM8Mf-" -O data --quiet
+
+      - name: Commit & push
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Auto-update from Google Drive: ${{ github.run_id }}"
+          branch: main
+
+
